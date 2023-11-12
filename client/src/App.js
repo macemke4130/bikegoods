@@ -5,6 +5,7 @@ import "./GlobalStyles.scss";
 
 // Pages
 import CreateListing from "./pages/CreateListing";
+import ProductDetails from "./pages/ProductDetails";
 
 // Components
 import Header from "./components/Header";
@@ -22,6 +23,9 @@ function App() {
             <Route path="/create-listing">
               <h1>List your item!</h1>
               <CreateListing />
+            </Route>
+            <Route path="/product-:id">
+              <ProductDetails />
             </Route>
           </Switch>
         </main>

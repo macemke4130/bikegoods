@@ -3,6 +3,8 @@
 ## Auth
 
 - `<Login />` Check to see if logged in on mount?
+- Register Link in Login Window
+- Register page probably has some legaleze
 
 ## CRUD
 
@@ -17,6 +19,10 @@
 
 ## Database
 
+- Add dateListed to goods table
+- Add "sellerId" to goods table
+- Brush up on JOINs
+- Change descriptionText to DescriptionId?
 - Preferred method of contact
 - Phone Number
 - Email, Text, Call

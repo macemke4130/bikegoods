@@ -1,4 +1,5 @@
 import React, { useReducer, useRef, useEffect, useState } from "react";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { gql } from "../utils/gql";
 
 import styles from "./CreateListing.module.scss";
@@ -18,6 +19,8 @@ const config = {
     brands: [],
   },
 };
+
+const toPennies = 100;
 
 const validateDataPoint = (payload) => {
   const numberDataPoints = ["brand", "deliveryType", "goodType", "quantity", "price"];
@@ -88,6 +91,8 @@ function CreateListing() {
   // Reducer
   const [state, dispatch] = useReducer(reducer, config.initialState);
 
+  const history = useHistory();
+
   useEffect(() => {
     if (!openGate.current) return;
     openGate.current = false;
@@ -101,8 +106,10 @@ function CreateListing() {
         goodTypes { id, type }
         deliveryTypes { id, type }
         brands { id, brandName }
-        itemConditions { id, itemCondition }
+        itemConditions { id, itemConditionName }
         }`);
+
+      console.info({ r });
 
       const compareType = (a, b) => a.type > b.type;
       const compareBrand = (a, b) => a.brandName > b.brandName;
@@ -132,54 +139,53 @@ function CreateListing() {
         setMessage(`Are you sure you want to list your ${state.title} for free?`);
         modalRef.current.showModal();
       }
-      console.info(state);
       sendGoodToDB();
     } else {
-      console.info("Keep Trying");
+      console.error("Keep Trying");
     }
   };
 
   const sendGoodToDB = async () => {
-    const mutation = `mutation { newGood(
-      price: ${Number(state.price)},
-      itemCondition: ${Number(state.itemCondition)}, 
-      title: "${state.title}", 
-      brand: 1,
-      goodType: ${Number(state.goodType)},
-      quantity: ${Number(state.quantity)},
-      deliveryType: ${Number(state.deliveryType)} ){ 
-      
-       fieldCount,
-      afffieldCount,
-      affectedRows,
-      insertId,
-      serverStatus,
-      warningCount,
-      message,
-      protocol41,
-      changedRows
-  }
-  }`;
-    const r = await gql(mutation);
-    const { newGood } = r;
+    const outsideTables = {
+      description: 0,
+    };
 
-    if (newGood.insertId) {
-      if (state.descriptionText) sendDescriptionToDB(newGood.insertId);
+    // If descriptionText, insert into goodDescriptions database
+    // and return insertId into {outsideTables}.
+    if (state.descriptionText) {
+      const descriptionStatus = await sendDescriptionToDB();
+      outsideTables.description = descriptionStatus.insertId;
+    }
+
+    // Add product to goods table.
+    try {
+      const r = await gql(
+        `mutation { newGood( price: ${Number(state.price) * toPennies}, itemCondition: ${Number(state.itemCondition)},  title: "${
+          state.title
+        }",  brand: 1, descriptionId: ${outsideTables.description ?? null}, goodType: ${Number(state.goodType)}, quantity: ${Number(
+          state.quantity
+        )}, deliveryType: ${Number(state.deliveryType)} ){ insertId } }`
+      );
+
+      const { newGood } = r;
+
+      if (newGood.insertId) {
+        history.push(`/product-${newGood.insertId}?success=true`);
+      }
+    } catch (e) {
+      console.error(e);
     }
   };
 
-  const sendDescriptionToDB = async (insertId) => {
-    const r = await gql(`mutation { newDescription(goodId: ${insertId}, descriptionText: "${state.descriptionText}") { fieldCount,
-      afffieldCount,
-      affectedRows,
-      insertId,
-      serverStatus,
-      warningCount,
-      message,
-      protocol41,
-      changedRows} }`);
+  const sendDescriptionToDB = async () => {
+    try {
+      const r = await gql(`mutation { newDescription(descriptionText: "${state.descriptionText}") { insertId} }`);
+      const { newDescription } = r;
 
-    console.info(r);
+      return { insertId: newDescription.insertId ?? 0 };
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const validateInputs = () => {
@@ -206,7 +212,7 @@ function CreateListing() {
     dispatch({ dataPoint, dataValue });
   };
 
-  const handleClear = (e) => {
+  const handleClearTitle = (e) => {
     e.preventDefault();
     const dataPoint = "title";
     const dataValue = "";
@@ -242,7 +248,7 @@ function CreateListing() {
       <label>
         Product Title:
         <input type="text" data-point="title" value={state.title} onChange={handleReducer}></input>
-        <button onClick={handleClear} aria-label="Erase Title Text">
+        <button onClick={handleClearTitle} aria-label="Erase Title Text">
           X
         </button>
       </label>
@@ -257,8 +263,8 @@ function CreateListing() {
         <select data-point="itemCondition" value={state.itemCondition} onChange={handleReducer}>
           <option value="0">Please Select...</option>
           {serverOptions?.itemConditions?.map((condition) => (
-            <option key={condition.itemCondition} value={condition.id}>
-              {condition.itemCondition}
+            <option key={condition.itemConditionName} value={condition.id}>
+              {condition.itemConditionName}
             </option>
           ))}
         </select>

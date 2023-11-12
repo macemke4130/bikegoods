@@ -5,23 +5,25 @@ create table goods (
     price int not null,
     itemCondition int not null,
     title varchar(128) not null,
-    brand varchar(64) not null,
+    brand int,
     descriptionId int,
     photosId int,
     goodType int not null,
-    deliveryTypes int not null
+    deliveryType int not null
 );
 
 drop table goods;
 
+select * from goods inner join brands on goods.brand = brands.id join itemConditions on goods.itemCondition = itemConditions.id itemConditionName where goods.id = 1;
+
 create table itemConditions (
     id int primary key auto_increment not null,
-    itemCondition varchar(64) not null
+    itemConditionString varchar(64) not null
 );
 
 drop table itemConditions;
 
-insert into itemConditions (itemCondition)
+insert into itemConditions (itemConditionString)
 values ('New - In Packaging'),
 ('New - No Packaging'),
 ('Used - Like New'),
@@ -40,10 +42,12 @@ values ('pickup'),
 ('shipping'),
 ('both');
 
-create table goodsDescriptions (
+create table goodDescriptions (
     id int primary key auto_increment not null,
     descriptionText varchar(2000)
 );
+drop table goodDescriptions;
+select * from goodDescriptions;
 
 create table goodsPhotos (
     id int primary key auto_increment not null,
@@ -51,13 +55,13 @@ create table goodsPhotos (
     filename varchar(500)
 );
 
-create table goodsType (
+create table goodTypes (
     id int primary key auto_increment not null,
     type varchar(64) not null
 );
-drop table goodsType;
+drop table goodTypes;
 
-insert into goodsType (type)
+insert into goodTypes (type)
 values ('Rear Derailleur'),
 ('Front Derailleur'),
 ('Brake'),
@@ -94,4 +98,4 @@ values ('Rear Derailleur'),
 ('Fixed Cog / Lockring'),
 ('Tire');
 
-select * from goodsType;
+select * from goodTypes;

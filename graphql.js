@@ -9,17 +9,19 @@ export const schema = buildSchema(`
     greet: String
     userLogin (emailAddress: String!, userPassword: String!): AuthObject
     userInfo (id: Int!): User
+    productDetails (id: Int!): Product
     paymentMethods (userId: Int!): PaymentMethod
     goodTypes: [GoodType]
     deliveryTypes: [DeliveryType]
     brands: [Brand]
+    getBrand (id: Int!): Brand
     itemConditions: [ItemCondition]
   }
 
   type Mutation {
     newUser (displayName: String!, emailAddress: String!, userPassword: String!): mysqlResponse
-    newGood (brand: Int, goodType: Int!, title: String!, quantity: Int, price: Int, itemCondition: Int, deliveryType: Int): mysqlResponse
-    newDescription (goodId: Int, descriptionText: String): mysqlResponse
+    newGood (brand: Int, goodType: Int!, title: String!, quantity: Int, descriptionId: Int, price: Int, itemCondition: Int, deliveryType: Int): mysqlResponse
+    newDescription (descriptionText: String): mysqlResponse
   }
 
   type AuthObject {
@@ -42,6 +44,22 @@ export const schema = buildSchema(`
     changedRows: Int
 }
 
+type Product {
+  id: Int
+  sold: Boolean
+  quantity: Int
+  price: Int
+  itemCondition: Int
+  itemConditionName: String
+  title: String
+  brand: Int
+  brandName: String
+  descriptionId: Int
+  photosId: Int
+  goodType: Int
+  deliveryType: Int
+}
+
 type NewUser {
   email: String
   password: String
@@ -54,7 +72,7 @@ type DeliveryType {
 
 type ItemCondition {
   id: Int
-  itemCondition: String
+  itemConditionName: String
 }
 
 type User {
@@ -142,6 +160,14 @@ export const root = {
     const r = await query("insert into goodDescriptions set ?", [args]);
     return r;
   },
+  productDetails: async (args, req) => {
+    // const r = await query(`select * from goods where id = ?`, [args.id]);
+    const r = await query(
+      `select * from goods inner join brands on goods.brand = brands.id join itemConditions on goods.itemCondition = itemConditions.id where goods.id = ?`,
+      [args.id]
+    );
+    return r[0];
+  },
   userInfo: async (args, req) => {
     const r = await query("select * from users where id = ?", [args.id]);
     return r[0];
@@ -161,6 +187,10 @@ export const root = {
   brands: async () => {
     const r = await query("select * from brands order by id");
     return r;
+  },
+  getBrand: async (args, req) => {
+    const r = await query("select * from brands where id = ?", [args.id]);
+    return r[0];
   },
   itemConditions: async () => {
     const r = await query("select * from itemConditions order by id");
