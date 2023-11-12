@@ -1,0 +1,11 @@
+.container {
+  position: relative;
+  background-color: gray;
+
+  [data-wrapper] {
+    display: flex;
+    justify-content: space-between;
+    max-width: 96rem;
+    margin: 0 auto;
+  }
+}
