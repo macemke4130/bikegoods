@@ -9,7 +9,7 @@
 - Convert price from USD to USD in pennies
 - Convert brands from string to int for database insert
 - Make `<dialog>` to catch FREE listings
-- Convert Brands <select> into that other one that lets you type in it?
+- Convert Brands `<select>` into that other one that lets you type in it?
 
 ## Routing
 
