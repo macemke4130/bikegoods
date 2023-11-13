@@ -1,0 +1,19 @@
+.container {
+  position: relative;
+  text-align: center;
+  color: black;
+  font-size: 1.5rem;
+  padding: 1rem;
+  margin: 0.5rem auto;
+  width: 50%;
+  background-color: pink;
+  border-radius: 0.25rem;
+
+  button {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background-color: transparent;
+    border: 1px solid black;
+  }
+}

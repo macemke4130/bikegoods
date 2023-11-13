@@ -14,16 +14,17 @@ create table goods (
 
 drop table goods;
 
-select * from goods inner join brands on goods.brand = brands.id join itemConditions on goods.itemCondition = itemConditions.id itemConditionName where goods.id = 1;
+select * from goods inner join brands on goods.brand = brands.id join goodTypes on goods.goodType = goodTypes.id join itemConditions on goods.itemCondition = itemConditions.id join goodDescriptions on goods.descriptionId = goodDescriptions.id where goods.id = 5;
+
 
 create table itemConditions (
     id int primary key auto_increment not null,
-    itemConditionString varchar(64) not null
+    itemConditionName varchar(64) not null
 );
 
 drop table itemConditions;
 
-insert into itemConditions (itemConditionString)
+insert into itemConditions (itemConditionName)
 values ('New - In Packaging'),
 ('New - No Packaging'),
 ('Used - Like New'),
@@ -38,9 +39,9 @@ create table deliveryType (
 );
 
 insert into deliveryType (deliveryType)
-values ('pickup'),
-('shipping'),
-('both');
+values ('Pickup Only'),
+('Shipping Only'),
+('Pickup or Shipping');
 
 create table goodDescriptions (
     id int primary key auto_increment not null,
@@ -77,7 +78,7 @@ values ('Rear Derailleur'),
 ('Spoke'),
 ('Stem'),
 ('Saddle'),
-('Handlebar'),
+('Handlebars'),
 ('Grip'),
 ('Bar Tape'),
 ('Fender'),

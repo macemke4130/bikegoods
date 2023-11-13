@@ -11,6 +11,8 @@ lastName varchar(64)
 );
 drop table users;
 
+select * from users;
+
 create table paymentMethods (
 id int primary key auto_increment not null,
 userId int not null,

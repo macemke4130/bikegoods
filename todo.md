@@ -8,10 +8,15 @@
 
 ## CRUD
 
-- Convert price from USD to USD in pennies
+- Remove double spaces from Title on create/edit listing
 - Convert brands from string to int for database insert
 - Make `<dialog>` to catch FREE listings
 - Convert Brands `<select>` into that other one that lets you type in it?
+- newProduct: Needs list date, number of views since listing
+
+## Profile
+
+- Default Physical Location - Used for "local pickup" items
 
 ## Routing
 
@@ -19,6 +24,7 @@
 
 ## Database
 
+- Create analytics table and logic
 - Add dateListed to goods table
 - Add "sellerId" to goods table
 - Brush up on JOINs

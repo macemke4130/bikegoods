@@ -20,7 +20,7 @@ export const schema = buildSchema(`
 
   type Mutation {
     newUser (displayName: String!, emailAddress: String!, userPassword: String!): mysqlResponse
-    newGood (brand: Int, goodType: Int!, title: String!, quantity: Int, descriptionId: Int, price: Int, itemCondition: Int, deliveryType: Int): mysqlResponse
+    newGood (brand: Int, goodType: Int!, title: String!, quantity: Int, descriptionId: Int, price: Int, itemCondition: Int, deliveryId: Int): mysqlResponse
     newDescription (descriptionText: String): mysqlResponse
   }
 
@@ -55,9 +55,11 @@ type Product {
   brand: Int
   brandName: String
   descriptionId: Int
+  descriptionText: String
   photosId: Int
   goodType: Int
-  deliveryType: Int
+  type: String
+  deliveryType: String
 }
 
 type NewUser {
@@ -67,7 +69,7 @@ type NewUser {
 
 type DeliveryType {
   id: Int
-  type: String
+  deliveryType: String
 }
 
 type ItemCondition {
@@ -163,7 +165,7 @@ export const root = {
   productDetails: async (args, req) => {
     // const r = await query(`select * from goods where id = ?`, [args.id]);
     const r = await query(
-      `select * from goods inner join brands on goods.brand = brands.id join itemConditions on goods.itemCondition = itemConditions.id where goods.id = ?`,
+      `select * from goods inner join brands on goods.brand = brands.id join goodTypes on goods.goodType = goodTypes.id join itemConditions on goods.itemCondition = itemConditions.id join goodDescriptions on goods.descriptionId = goodDescriptions.id join deliveryTypes on goods.deliveryId = deliveryTypes.id where goods.id = ?`,
       [args.id]
     );
     return r[0];

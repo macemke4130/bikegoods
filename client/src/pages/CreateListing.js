@@ -5,7 +5,7 @@ import { gql } from "../utils/gql";
 import styles from "./CreateListing.module.scss";
 
 const config = {
-  requiredState: ["title", "goodType", "deliveryType", "quantity"],
+  requiredState: ["title", "goodType", "deliveryId", "quantity"],
   initialState: {
     brand: "",
     title: "",
@@ -23,7 +23,7 @@ const config = {
 const toPennies = 100;
 
 const validateDataPoint = (payload) => {
-  const numberDataPoints = ["brand", "deliveryType", "goodType", "quantity", "price"];
+  const numberDataPoints = ["brand", "deliveryId", "goodType", "quantity", "price"];
 
   numberDataPoints.forEach((numberedDataPoint) => {
     if (numberedDataPoint === payload.dataPoint) return Number(payload.dataPoint);
@@ -104,12 +104,10 @@ function CreateListing() {
     try {
       const r = await gql(`{ 
         goodTypes { id, type }
-        deliveryTypes { id, type }
+        deliveryTypes { id, deliveryType }
         brands { id, brandName }
         itemConditions { id, itemConditionName }
         }`);
-
-      console.info({ r });
 
       const compareType = (a, b) => a.type > b.type;
       const compareBrand = (a, b) => a.brandName > b.brandName;
@@ -164,13 +162,14 @@ function CreateListing() {
           state.title
         }",  brand: 1, descriptionId: ${outsideTables.description ?? null}, goodType: ${Number(state.goodType)}, quantity: ${Number(
           state.quantity
-        )}, deliveryType: ${Number(state.deliveryType)} ){ insertId } }`
+        )}, deliveryId: ${Number(state.deliveryId)} ){ insertId } }`
       );
 
       const { newGood } = r;
 
       if (newGood.insertId) {
-        history.push(`/product-${newGood.insertId}?success=true`);
+        console.info("Success");
+        // history.push(`/product-${newGood.insertId}?success=true`);
       }
     } catch (e) {
       console.error(e);
@@ -179,7 +178,10 @@ function CreateListing() {
 
   const sendDescriptionToDB = async () => {
     try {
-      const r = await gql(`mutation { newDescription(descriptionText: "${state.descriptionText}") { insertId} }`);
+      const removeCarriageReturns = state.descriptionText.replace(RegExp(String.fromCharCode(10), "g"), "/n");
+      const mutation = `mutation { newDescription(descriptionText: "${removeCarriageReturns}") { insertId} }`;
+      const r = await gql(mutation);
+
       const { newDescription } = r;
 
       return { insertId: newDescription.insertId ?? 0 };
@@ -277,13 +279,11 @@ function CreateListing() {
 
       <label>
         Delivery Method:
-        <select data-point="deliveryType" value={state.deliveryType} onChange={handleReducer}>
+        <select data-point="deliveryId" value={state.deliveryId} onChange={handleReducer}>
           <option value="0">Please Select...</option>
           {serverOptions?.deliveryTypes?.map((type) => (
-            <option key={type.type} value={type.id}>
-              {type.type === "pickup" && "Pickup Only"}
-              {type.type === "shipping" && "Shipping Only"}
-              {type.type === "both" && "Pickup or Shipping"}
+            <option key={type.deliveryType} value={type.id}>
+              {type.deliveryType}
             </option>
           ))}
         </select>

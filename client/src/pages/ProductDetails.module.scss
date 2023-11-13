@@ -1,3 +1,31 @@
 .container {
   background-color: transparent;
+
+  [data-pdp-column] {
+    display: grid;
+    grid-template-columns: 60% 1fr;
+
+    [data-image-section] {
+      [data-image] {
+        margin: 0 auto;
+      }
+    }
+
+    [data-details-section] {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      [data-price] {
+        font-size: 1.25rem;
+      }
+    }
+  }
+
+  [data-description] {
+    p:empty::after {
+      content: "-";
+      visibility: hidden;
+    }
+  }
 }
