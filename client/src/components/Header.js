@@ -10,7 +10,7 @@ function Header() {
   return (
     <header className={styles.container}>
       <div data-wrapper>
-        <img src="not-found.jpg" alt="Site Logo" />
+        <img data-logo src="./logo.png" alt="Site Logo" />
         <Navigation />
         <Login />
       </div>

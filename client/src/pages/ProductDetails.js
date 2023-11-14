@@ -28,14 +28,14 @@ const reducer = (state, payload) => {
   const penniesToDollars = payload.price / 100;
   const soldStatus = payload.sold ? "No Longer Available" : "Still Available";
   const descriptionParagraphs = payload.descriptionText.split("/n");
-
-  console.info(descriptionParagraphs);
+  const listedTime = new Date(Number(payload.dateListed)).toLocaleDateString();
 
   return {
     ...payload,
     sold: soldStatus,
     price: `$${penniesToDollars}`,
     descriptionParagraphs,
+    listedTime,
   };
 };
 
@@ -65,7 +65,7 @@ function ProductDetails() {
   const getProductDetails = async () => {
     try {
       const { productDetails } = await gql(
-        `{ productDetails(id: ${productId}){ sold, quantity, price, itemConditionName, title, brandName, descriptionId, photosId, goodType, type, deliveryType, descriptionText } }`
+        `{ productDetails(id: ${productId}){ dateListed, displayName, sold, quantity, price, itemConditionName, title, brandName, goodType, type, deliveryType, descriptionText } }`
       );
 
       if (productDetails) {
@@ -91,14 +91,14 @@ function ProductDetails() {
         <section data-details-section aria-label="Product Details">
           <h1>{state.title}</h1>
           <div data-price>{state.price}</div>
-          <div data-status>Listing Status: {state.sold}</div>
-          <div data-quantity>Quantity Available: {state.quantity}</div>
-          <div data-condition>Item Condition: {state.itemConditionName}</div>
-          {/* {Object.keys(state)?.map((thing) => (
-            <div key={thing}>
-              {thing}: {state[thing] + ""}
+          <div data-info-box>
+            <div data-quantity>Quantity Available: {state.quantity}</div>
+            <div data-condition>Item Condition: {state.itemConditionName}</div>
+            <div data-status>Listing Status: {state.sold}</div>
+            <div data-seller>
+              Listed by <Link to={`/profile-${state.displayName}`}>{state.displayName}</Link> on {state.listedTime}
             </div>
-          ))} */}
+          </div>
         </section>
       </div>
       <section data-description aria-labelledby="description-title">

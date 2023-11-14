@@ -19,6 +19,13 @@
       [data-price] {
         font-size: 1.25rem;
       }
+
+      [data-info-box] {
+        width: 100%;
+        margin-top: 1rem;
+        padding: 0.5rem;
+        border: 1px solid var(--light-20);
+      }
     }
   }
 

@@ -1,3 +1,10 @@
+:root {
+  @for $i from 0 through 20 {
+    --dark-#{$i * 5}: rgba(0, 0, 0, #{$i * 0.05});
+    --light-#{$i * 5}: rgba(255, 255, 255, #{$i * 0.05});
+  }
+}
+
 *:not(dialog),
 *::before,
 *::after {
@@ -15,6 +22,7 @@ body {
   color: $text-color;
   background: $background-color;
   font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande", "Lucida Sans", Arial, sans-serif;
+  line-height: 1.35;
 
   #root {
     display: flex;
@@ -28,6 +36,7 @@ body {
     #main-content {
       max-width: 96rem;
       margin: 0 auto;
+      padding: 1rem;
     }
 
     #footer-spacer {

@@ -8,7 +8,9 @@ import CreateListing from "./pages/CreateListing";
 import ProductDetails from "./pages/ProductDetails";
 
 // Components
+import PrivateRoute from "./components/PrivateRoute";
 import Header from "./components/Header";
+import Footer from "./components/Footer";
 
 function App() {
   return (
@@ -20,10 +22,10 @@ function App() {
             <Route exact path="/">
               <h1>The Home Page!</h1>
             </Route>
-            <Route path="/create-listing">
+            <PrivateRoute path="/create-listing">
               <h1>List your item!</h1>
               <CreateListing />
-            </Route>
+            </PrivateRoute>
             <Route path="/product-:id">
               <ProductDetails />
             </Route>
@@ -31,7 +33,7 @@ function App() {
         </main>
       </Router>
       <div id="footer-spacer" aria-hidden="true" />
-      <footer>Some Copyright Information</footer>
+      <Footer />
     </>
   );
 }

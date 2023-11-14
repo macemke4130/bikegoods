@@ -158,9 +158,9 @@ function CreateListing() {
     // Add product to goods table.
     try {
       const r = await gql(
-        `mutation { newGood( price: ${Number(state.price) * toPennies}, itemCondition: ${Number(state.itemCondition)},  title: "${
-          state.title
-        }",  brand: 1, descriptionId: ${outsideTables.description ?? null}, goodType: ${Number(state.goodType)}, quantity: ${Number(
+        `mutation { newGood( jwt: "${localStorage.getItem("jwt")}", price: ${Number(state.price) * toPennies}, itemCondition: ${Number(
+          state.itemCondition
+        )},  title: "${state.title}",  brand: 1, descriptionId: ${outsideTables.description ?? null}, goodType: ${Number(state.goodType)}, quantity: ${Number(
           state.quantity
         )}, deliveryId: ${Number(state.deliveryId)} ){ insertId } }`
       );
@@ -169,7 +169,7 @@ function CreateListing() {
 
       if (newGood.insertId) {
         console.info("Success");
-        // history.push(`/product-${newGood.insertId}?success=true`);
+        history.push(`/product-${newGood.insertId}?success=true`);
       }
     } catch (e) {
       console.error(e);

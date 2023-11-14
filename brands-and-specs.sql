@@ -23,3 +23,4 @@ values ('Shimano'),
 ('Panaracer'),
 ('Microshift');
 
+select * from brands;

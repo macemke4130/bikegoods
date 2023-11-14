@@ -5,7 +5,15 @@
   [data-wrapper] {
     display: flex;
     justify-content: space-between;
+    height: 5rem;
     max-width: 96rem;
     margin: 0 auto;
+
+    [data-logo] {
+      height: 4.5rem;
+      width: auto;
+      object-fit: contain;
+      margin: auto 0;
+    }
   }
 }

@@ -1,0 +1,11 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  min-height: 7.5rem;
+  background-color: grey;
+
+  [data-copyright] {
+    padding-bottom: 1rem;
+  }
+}

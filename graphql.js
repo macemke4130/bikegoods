@@ -1,6 +1,10 @@
 import { buildSchema } from "graphql";
 import { query } from "./dbconnect.js";
 
+import * as jsonwebtoken from "jsonwebtoken";
+import config from "./config.js";
+const privateKey = config.keys.jwt;
+
 import bcrypt from "bcrypt";
 const saltRounds = 10;
 
@@ -9,6 +13,7 @@ export const schema = buildSchema(`
     greet: String
     userLogin (emailAddress: String!, userPassword: String!): AuthObject
     userInfo (id: Int!): User
+    authorizeJWT (jwt: String!): Boolean
     productDetails (id: Int!): Product
     paymentMethods (userId: Int!): PaymentMethod
     goodTypes: [GoodType]
@@ -20,7 +25,7 @@ export const schema = buildSchema(`
 
   type Mutation {
     newUser (displayName: String!, emailAddress: String!, userPassword: String!): mysqlResponse
-    newGood (brand: Int, goodType: Int!, title: String!, quantity: Int, descriptionId: Int, price: Int, itemCondition: Int, deliveryId: Int): mysqlResponse
+    newGood (jwt: String!, brand: Int, goodType: Int!, title: String!, quantity: Int, descriptionId: Int, price: Int, itemCondition: Int, deliveryId: Int): mysqlResponse
     newDescription (descriptionText: String): mysqlResponse
   }
 
@@ -46,6 +51,9 @@ export const schema = buildSchema(`
 
 type Product {
   id: Int
+  dateListed: String
+  userId: Int
+  displayName: String
   sold: Boolean
   quantity: Int
   price: Int
@@ -120,13 +128,29 @@ export const root = {
 
     const passwordMatch = bcrypt.compareSync(args.userPassword, passwordFromDB);
 
-    return {
+    const userObject = {
+      user: args.emailAddress,
+      admin: r[0].admin,
+      userId: r[0].id,
+    };
+
+    const token = passwordMatch ? await jsonwebtoken.default.sign({ data: userObject }, privateKey, { expiresIn: "365d" }) : null;
+
+    const loginObject = {
       success: passwordMatch,
       emailAddress: args.emailAddress,
       displayName: passwordMatch ? r[0].displayName : "null",
-      jwt: passwordMatch ? "JWT String" : "null",
+      jwt: passwordMatch ? token : "null",
       message: passwordMatch ? "200" : "Email or Password not recognized.",
     };
+
+    return loginObject;
+  },
+  authorizeJWT: async (args, req) => {
+    const auth = await jsonwebtoken.default.verify(args.jwt, privateKey, function (err, decoded) {
+      return err ? false : true;
+    });
+    return auth;
   },
   newUser: async (args, req) => {
     const hashedPassword = bcrypt.hashSync(args.userPassword, saltRounds);
@@ -146,26 +170,29 @@ export const root = {
         userPassword: "error",
         message: e.code,
       };
-      console.log(e.code);
+
       return newUserInfo;
     }
   },
   newGood: async (args, req) => {
-    // To Do: Check JWT before input - LM
+    const authUserId = await jsonwebtoken.default.verify(args.jwt, privateKey, function (err, decoded) {
+      return decoded.data.userId;
+    });
+
+    delete args.jwt;
+    args.userId = authUserId;
+    console.log(args);
 
     const r = await query("insert into goods set ?", [args]);
     return r;
   },
   newDescription: async (args, req) => {
-    // To Do: Check JWT before input - LM
-
     const r = await query("insert into goodDescriptions set ?", [args]);
     return r;
   },
   productDetails: async (args, req) => {
-    // const r = await query(`select * from goods where id = ?`, [args.id]);
     const r = await query(
-      `select * from goods inner join brands on goods.brand = brands.id join goodTypes on goods.goodType = goodTypes.id join itemConditions on goods.itemCondition = itemConditions.id join goodDescriptions on goods.descriptionId = goodDescriptions.id join deliveryTypes on goods.deliveryId = deliveryTypes.id where goods.id = ?`,
+      `select * from goods join users on goods.userId = users.id join brands on goods.brand = brands.id join goodTypes on goods.goodType = goodTypes.id join itemConditions on goods.itemCondition = itemConditions.id join goodDescriptions on goods.descriptionId = goodDescriptions.id join deliveryTypes on goods.deliveryId = deliveryTypes.id where goods.id = ?`,
       [args.id]
     );
     return r[0];

@@ -1,5 +1,7 @@
 create table goods (
     id int primary key auto_increment not null,
+    dateListed timestamp default now(),
+    userId int not null,
     sold boolean default false,
     quantity int not null,
     price int not null,
@@ -9,12 +11,12 @@ create table goods (
     descriptionId int,
     photosId int,
     goodType int not null,
-    deliveryType int not null
+    deliveryId int not null
 );
 
 drop table goods;
 
-select * from goods inner join brands on goods.brand = brands.id join goodTypes on goods.goodType = goodTypes.id join itemConditions on goods.itemCondition = itemConditions.id join goodDescriptions on goods.descriptionId = goodDescriptions.id where goods.id = 5;
+select * from goods inner join brands on goods.brand = brands.id join goodTypes on goods.goodType = goodTypes.id join itemConditions on goods.itemCondition = itemConditions.id join goodDescriptions on goods.descriptionId = goodDescriptions.id join deliveryTypes on goods.deliveryId = deliveryTypes.id where goods.id = 2;
 
 
 create table itemConditions (
@@ -33,15 +35,19 @@ values ('New - In Packaging'),
 ('Used - Acceptable and Functioning'),
 ('Used - For Parts or Not Functioning');
 
-create table deliveryType (
+create table deliveryTypes (
     id int primary key auto_increment not null,
     deliveryType varchar(32)
 );
 
-insert into deliveryType (deliveryType)
+drop table deliveryTypes;
+
+insert into deliveryTypes (deliveryType)
 values ('Pickup Only'),
 ('Shipping Only'),
 ('Pickup or Shipping');
+
+select * from deliveryTypes;
 
 create table goodDescriptions (
     id int primary key auto_increment not null,

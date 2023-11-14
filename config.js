@@ -10,7 +10,7 @@ export default {
     password: process.env.DB_PASS,
     database: process.env.DB_SCHEMA,
   },
-  // keys: {
-  //     jwt: process.env.JWT_SECRET
-  // }
+  keys: {
+    jwt: process.env.JWT_SECRET,
+  },
 };
