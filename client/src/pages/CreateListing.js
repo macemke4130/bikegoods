@@ -5,9 +5,12 @@ import { gql } from "../utils/gql";
 import styles from "./CreateListing.module.scss";
 
 const config = {
-  requiredState: ["title", "goodType", "deliveryId", "quantity"],
+  requiredState: ["title", "categoryId", "deliveryId", "quantity"],
   initialState: {
     brand: "",
+    categoryId: 0,
+    subcategoryId: 0,
+    brandSelect: 0,
     title: "",
     quantity: 1,
     price: 0.0,
@@ -15,7 +18,8 @@ const config = {
     descriptionCharacterCount: 2000,
   },
   databaseLists: {
-    goodTypes: [],
+    categories: [],
+    subcategories: [],
     brands: [],
   },
 };
@@ -23,7 +27,7 @@ const config = {
 const toPennies = 100;
 
 const validateDataPoint = (payload) => {
-  const numberDataPoints = ["brand", "deliveryId", "goodType", "quantity", "price"];
+  const numberDataPoints = ["brand", "deliveryId", "category", "quantity", "price"];
 
   numberDataPoints.forEach((numberedDataPoint) => {
     if (numberedDataPoint === payload.dataPoint) return Number(payload.dataPoint);
@@ -39,19 +43,38 @@ const reducer = (state, payload) => {
   if (dataValue === 0) return { ...state };
 
   switch (payload.dataPoint) {
+    case "brandSelect": {
+      const brandName = payload.dataValue.split("@")[1];
+
+      return {
+        ...state,
+        brand: brandName,
+        brandSelect: payload.dataValue,
+        title: `${brandName} `,
+      };
+    }
+
     case "brand": {
       return {
         ...state,
         brand: payload.dataValue,
         title: `${payload.dataValue} `,
+        brandSelect: 0,
       };
     }
 
-    case "goodType": {
+    case "categoryId": {
       return {
         ...state,
-        goodType: dataValue,
-        title: `${state.title} ${config.databaseLists.goodTypes[dataValue - 1].type}`,
+        categoryId: dataValue,
+      };
+    }
+
+    case "subcategoryId": {
+      console.info(payload);
+      return {
+        ...state,
+        subcategoryId: dataValue,
       };
     }
 
@@ -87,6 +110,7 @@ function CreateListing() {
   const [loading, setLoading] = useState(true);
   const [serverOptions, setServerOptions] = useState({});
   const [message, setMessage] = useState("");
+  const [subcategories, setSubcategories] = useState([]);
 
   // Reducer
   const [state, dispatch] = useReducer(reducer, config.initialState);
@@ -103,23 +127,25 @@ function CreateListing() {
   const getServerOptions = async () => {
     try {
       const r = await gql(`{ 
-        goodTypes { id, type }
+        categories { id, category }
         deliveryTypes { id, deliveryType }
         brands { id, brandName }
         itemConditions { id, itemConditionName }
         }`);
 
-      const compareType = (a, b) => a.type > b.type;
+      const compareCategory = (a, b) => a.category > b.category;
       const compareBrand = (a, b) => a.brandName > b.brandName;
 
-      // Make a copy of the goodTypes database before sorting
-      config.databaseLists.goodTypes = [...r.goodTypes];
+      // Make a copy of these databases before sorting.
+      // This is important because I am referencing the original
+      // order so populate the state.title for the user - LM
+      config.databaseLists.categories = [...r.categories];
       config.databaseLists.brands = [r.brands];
 
       setServerOptions({
         deliveryTypes: r.deliveryTypes,
         brands: r.brands.sort(compareBrand),
-        goodTypes: r.goodTypes.sort(compareType),
+        categories: r.categories.sort(compareCategory),
         itemConditions: r.itemConditions,
       });
 
@@ -155,15 +181,26 @@ function CreateListing() {
       outsideTables.description = descriptionStatus.insertId;
     }
 
+    const productTitle = state.title.replaceAll("  ", " ");
+
     // Add product to goods table.
     try {
-      const r = await gql(
-        `mutation { newGood( jwt: "${localStorage.getItem("jwt")}", price: ${Number(state.price) * toPennies}, itemCondition: ${Number(
-          state.itemCondition
-        )},  title: "${state.title}",  brand: 1, descriptionId: ${outsideTables.description ?? null}, goodType: ${Number(state.goodType)}, quantity: ${Number(
-          state.quantity
-        )}, deliveryId: ${Number(state.deliveryId)} ){ insertId } }`
-      );
+      const mutation = `mutation { newGood( 
+        jwt: "${localStorage.getItem("jwt")}", 
+        price: ${Number(state.price) * toPennies}, 
+        itemCondition: ${Number(state.itemCondition)},  
+        title: "${productTitle}",  
+        brand: 1, 
+        descriptionId: ${outsideTables.description ?? null}, 
+        categoryId: ${Number(state.categoryId)}, 
+        subcategoryId: ${Number(state.subcategoryId)} 
+        quantity: ${Number(state.quantity)}, 
+        deliveryId: ${Number(state.deliveryId)} )
+      { insertId } }`;
+
+      console.info(mutation);
+
+      const r = await gql(mutation);
 
       const { newGood } = r;
 
@@ -211,7 +248,15 @@ function CreateListing() {
   const handleReducer = (e) => {
     const dataPoint = e.target.dataset.point;
     const dataValue = e.target.value;
+
     dispatch({ dataPoint, dataValue });
+    if (dataPoint === "categoryId") fetchSubcategory(dataValue);
+  };
+
+  const fetchSubcategory = async (categoryId) => {
+    const { subcategories } = await gql(`{ subcategories (categoryId: ${Number(categoryId)}) { id, subcategory } }`);
+    subcategories.sort((a, b) => a.subcategory > b.subcategory);
+    setSubcategories(subcategories);
   };
 
   const handleClearTitle = (e) => {
@@ -225,23 +270,48 @@ function CreateListing() {
 
   return (
     <form className={styles.container}>
-      <label>
-        Brand:
-        <input data-point="brand" list="brand-list" value={state.brand} onChange={handleReducer} />
-        <datalist id="brand-list">
-          {serverOptions?.brands?.map((brand) => (
-            <option key={brand.brandName} data-brand-id={brand.id} value={brand.brandName}></option>
-          ))}
-        </datalist>
-      </label>
+      <fieldset data-brand-box>
+        <legend>Brand</legend>
+        <label>
+          <div data-brand-instructions>Select a Brand from list or type in the field</div>
+          <div data-brand-inputs>
+            <select data-point="brandSelect" value={state.brandSelect} onChange={handleReducer}>
+              <option value="0">Brands...</option>
+              {serverOptions?.brands?.map((brand) => (
+                <option key={brand.brandName} data-brand-select={brand.brandName} value={`${brand.id}@${brand.brandName}`}>
+                  {brand.brandName}
+                </option>
+              ))}
+            </select>
+            <input placeholder="Brand Name" data-point="brand" list="brand-list" value={state.brand} onChange={handleReducer} />
+            <datalist id="brand-list">
+              {serverOptions?.brands?.map((brand) => (
+                <option key={brand.brandName} data-brand-id={brand.id} value={brand.brandName}></option>
+              ))}
+            </datalist>
+          </div>
+        </label>
+      </fieldset>
 
       <label>
-        Type of product:
-        <select data-point="goodType" value={state.goodType} onChange={handleReducer}>
+        Product Category:
+        <select data-point="categoryId" value={state.categoryId} onChange={handleReducer}>
           <option value="0">Please Select...</option>
-          {serverOptions?.goodTypes?.map((type) => (
-            <option key={type.type} value={type.id}>
-              {type.type}
+          {serverOptions?.categories?.map((category) => (
+            <option key={category.category} value={category.id}>
+              {category.category}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label data-visually-hidden={subcategories.length ? false : true}>
+        Sub-Category:
+        <select data-point="subcategoryId" value={state.subcategoryId} onChange={handleReducer}>
+          <option value="0">Please Select...</option>
+          {subcategories?.map((subcategory) => (
+            <option key={subcategory.subcategory} value={subcategory.id}>
+              {subcategory.subcategory}
             </option>
           ))}
         </select>

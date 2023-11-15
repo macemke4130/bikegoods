@@ -2,10 +2,9 @@ import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom/cjs/react-router-dom";
 
 import { gql } from "../utils/gql";
-// import { waitForDOM } from "../utils/tools";
+import { waitForDOM } from "../utils/tools";
 
 import styles from "./Login.module.scss";
-import { waitForDOM } from "../utils/tools";
 
 function Login() {
   const [loginWindowActive, setLoginWindowActive] = useState(false);
@@ -15,7 +14,15 @@ function Login() {
   const [userPassword, setUserPassword] = useState("");
 
   // Ref
+  const openGate = useRef(true);
   const emailInput = useRef();
+
+  useEffect(() => {
+    if (!openGate.current) return;
+    openGate.current = false;
+
+    pageLoadLogin();
+  });
 
   useEffect(() => {
     window.addEventListener("keydown", handleEnterKey);
@@ -69,6 +76,16 @@ function Login() {
       }
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const pageLoadLogin = async () => {
+    const jwt = localStorage.getItem("jwt");
+    const { authorizeJWT } = await gql(`{ authorizeJWT( jwt: "${jwt}") }`);
+
+    if (authorizeJWT) {
+      setDisplayName(localStorage.getItem("displayName"));
+      setLoginWindowActive(false);
     }
   };
 

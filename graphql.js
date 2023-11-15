@@ -21,12 +21,25 @@ export const schema = buildSchema(`
     brands: [Brand]
     getBrand (id: Int!): Brand
     itemConditions: [ItemCondition]
+    categories: [Category]
+    subcategories (categoryId: Int!): [Subcategory]
   }
 
   type Mutation {
     newUser (displayName: String!, emailAddress: String!, userPassword: String!): mysqlResponse
-    newGood (jwt: String!, brand: Int, goodType: Int!, title: String!, quantity: Int, descriptionId: Int, price: Int, itemCondition: Int, deliveryId: Int): mysqlResponse
+    newGood (jwt: String!, brand: Int, title: String!, quantity: Int, descriptionId: Int, price: Int, itemCondition: Int, deliveryId: Int, categoryId: Int, subcategoryId: Int): mysqlResponse
     newDescription (descriptionText: String): mysqlResponse
+  }
+
+  type Category {
+    id: Int
+    category: String
+  }
+
+  type Subcategory {
+    id: Int
+    categoryId: Int
+    subcategory: String
   }
 
   type AuthObject {
@@ -68,6 +81,8 @@ type Product {
   goodType: Int
   type: String
   deliveryType: String
+  category: String
+  subcategory: String
 }
 
 type NewUser {
@@ -121,6 +136,14 @@ type Brand {
 export const root = {
   greet: () => {
     return "Satan";
+  },
+  categories: async () => {
+    const r = await query("select * from categories order by id");
+    return r;
+  },
+  subcategories: async (args, req) => {
+    const r = await query("select * from subcategories where categoryId = ? order by id", [args.categoryId]);
+    return r;
   },
   userLogin: async (args, req) => {
     const r = await query("select * from users where emailAddress = ?", [args.emailAddress]);
@@ -192,7 +215,7 @@ export const root = {
   },
   productDetails: async (args, req) => {
     const r = await query(
-      `select * from goods join users on goods.userId = users.id join brands on goods.brand = brands.id join goodTypes on goods.goodType = goodTypes.id join itemConditions on goods.itemCondition = itemConditions.id join goodDescriptions on goods.descriptionId = goodDescriptions.id join deliveryTypes on goods.deliveryId = deliveryTypes.id where goods.id = ?`,
+      `select * from goods join users on goods.userId = users.id join brands on goods.brand = brands.id join categories on goods.categoryId = categories.id join subcategories on goods.subcategoryId = subcategories.id join itemConditions on goods.itemCondition = itemConditions.id join goodDescriptions on goods.descriptionId = goodDescriptions.id join deliveryTypes on goods.deliveryId = deliveryTypes.id where goods.id = ?`,
       [args.id]
     );
     return r[0];

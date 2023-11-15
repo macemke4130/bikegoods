@@ -10,14 +10,100 @@ create table goods (
     brand int,
     descriptionId int,
     photosId int,
-    goodType int not null,
+    categoryId int not null,
+    subcategoryId int,
     deliveryId int not null
 );
 
 drop table goods;
 
-select * from goods inner join brands on goods.brand = brands.id join goodTypes on goods.goodType = goodTypes.id join itemConditions on goods.itemCondition = itemConditions.id join goodDescriptions on goods.descriptionId = goodDescriptions.id join deliveryTypes on goods.deliveryId = deliveryTypes.id where goods.id = 2;
+select * from goods inner join brands on goods.brand = brands.id join goodTypes on goods.goodType = goodTypes.id join itemConditions on goods.itemCondition = itemConditions.id join goodDescriptions on goods.descriptionId = goodDescriptions.id join deliveryTypes on goods.deliveryId = deliveryTypes.id where goods.id = 1;
 
+create table categories (
+	id int primary key auto_increment not null,
+    category varchar(32)
+);
+
+drop table categories;
+
+insert into categories (category)
+values ("Bicycles"),
+("Parts and Accessories"),
+("Apparel"),
+("Art and Novelties"),
+("Car Racks and Storage"),
+("Tools");
+
+create table subcategories (
+	id int primary key auto_increment not null,
+    categoryId int not null,
+    subcategory varchar(32)
+);
+
+drop table subcategories;
+
+insert into subcategories (categoryId, subcategory)
+values (1, "Road Bike"),
+(1, "Mountain Bike"),
+(1, "Commuter / Hybrid Bike"),
+(1, "Track Bike"),
+(1, "Touring Bike"),
+(1, "Folding Bike"),
+(1, "Cargo Bike"),
+(1, "Gravel / Adventure Bike"),
+(2, "Rear Derailleur"),
+(2, "Front Derailleur"),
+(2, "Handlebar"),
+(2, "Stem"),
+(2, "Bar Tabe / Grips"),
+(2, "Fenders"),
+(2, "Cargo Rack"),
+(2, "Pedals"),
+(2, "Crankset"),
+(2, "Chainring"),
+(2, "Chain"),
+(2, "Cassette"),
+(2, "Freewheel"),
+(2, "Tire"),
+(2, "Wheel"),
+(2, "Tube"),
+(2, "Cable / Housing / Hose"),
+(2, "Brake Pad"),
+(2, "Tubeless Sealant"),
+(2, "Rim Tape"),
+(2, "Rim"),
+(2, "Spokes / Nipples"),
+(2, "Front Hub"),
+(2, "Rear Hub"),
+(2, "Brake / Brakeset"),
+(2, "Rotor"),
+(2, "Small Part"),
+(3, "Jersey"),
+(3, "Bibs"),
+(3, "Shoes"),
+(3, "Socks"),
+(3, "Helmet"),
+(3, "Padding"),
+(3, "Sunglasses"),
+(3, "Vest"),
+(3, "Jacket"),
+(4, "Wall Art"),
+(4, "Koozie"),
+(4, "Stickers / Patches"),
+(4, "Novelties"),
+(5, "Trunk Rack"),
+(5, "Hitch Rack"),
+(5, "Roof Rack"),
+(5, "Auto Roof Cargo Storage"),
+(5, "Indoor Storage"),
+(6, "General"),
+(6, "Frame"),
+(6, "Repair Stand"),
+(6, "Wheel"),
+(6, "Drivetrain")
+;
+
+select * from subcategories;
 
 create table itemConditions (
     id int primary key auto_increment not null,

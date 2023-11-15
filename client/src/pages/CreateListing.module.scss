@@ -4,8 +4,47 @@
   align-items: center;
   gap: 1rem;
 
+  [data-visually-hidden="true"] {
+    visibility: hidden;
+  }
+
+  [data-visually-hidden="false"] {
+    visibility: visible;
+  }
+
   [data-point="descriptionText"] {
     width: 80ch;
     height: 25ch;
+  }
+
+  [data-brand-box] {
+    padding: 0 1rem 1rem 1rem;
+
+    legend {
+      padding: 0 0.5rem;
+    }
+
+    [data-brand-instructions] {
+      text-align: center;
+      font-size: 0.9rem;
+      margin-bottom: 0.1rem;
+    }
+
+    [data-brand-inputs] {
+      display: flex;
+      gap: 1rem;
+
+      select {
+        min-width: 25ch;
+      }
+
+      input {
+        min-width: 25ch;
+      }
+
+      input::placeholder {
+        opacity: 0.25;
+      }
+    }
   }
 }

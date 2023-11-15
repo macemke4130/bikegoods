@@ -2,7 +2,6 @@
 
 ## Auth
 
-- Login on mount if JWT is in localstorage and valid
 - Register Link in Login Window
 - Registration page
 - Register page probably has some legaleze
@@ -24,7 +23,6 @@
 
 ## CRUD
 
-- Remove double spaces from Title on create/edit listing
 - Price? Willing to take trade.
 - Convert brands from string to int for database insert
 - Make `<dialog>` to catch FREE listings
@@ -63,15 +61,10 @@
     - Repair Stand
     - Wheel
     - Drivetrain
-- Create analytics table and logic
-- Add dateListed to goods table
-- Add "sellerId" to goods table
-- Brush up on JOINs
-- Change descriptionText to DescriptionId?
+- Add product weight to goods
 - Preferred method of contact
 - Phone Number
 - Email, Text, Call
-- Change "goodsTypes" to "goodTypes"
 
 ## GraphQL
 

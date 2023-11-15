@@ -65,7 +65,7 @@ function ProductDetails() {
   const getProductDetails = async () => {
     try {
       const { productDetails } = await gql(
-        `{ productDetails(id: ${productId}){ dateListed, displayName, sold, quantity, price, itemConditionName, title, brandName, goodType, type, deliveryType, descriptionText } }`
+        `{ productDetails(id: ${productId}){ category, subcategory, dateListed, displayName, sold, quantity, price, itemConditionName, title, brandName, goodType, type, deliveryType, descriptionText } }`
       );
 
       if (productDetails) {
@@ -83,7 +83,15 @@ function ProductDetails() {
   return (
     <div className={styles.container}>
       <SuccessfullyListed listSuccess={listSuccess} />
-      <Link to="#">See All {state.type}</Link>
+      <nav aria-label="Breadcrumb Navigation">
+        {state.category && <Link to="#">{state.category}</Link>}
+        {state.subcategory && (
+          <>
+            {" "}
+            - <Link to="#">{state.subcategory}</Link>
+          </>
+        )}
+      </nav>
       <div data-pdp-column>
         <section data-image-section aria-label="Product Photo" data-image>
           <img data-image src="./not-found.png" alt="Missing." />
