@@ -45,22 +45,6 @@
 
 ## Database
 
-- productType may need to become "category" and some may need a "subcategory"
-  - Bikes
-  - Components and Accessories
-    - Crankset
-    - Tire
-    - Cassette
-  - Apparel
-    - Jersey
-    - Shoes
-  - Art
-  - Tools
-    - General
-    - Frame
-    - Repair Stand
-    - Wheel
-    - Drivetrain
 - Add product weight to goods
 - Preferred method of contact
 - Phone Number

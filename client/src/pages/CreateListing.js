@@ -7,10 +7,11 @@ import styles from "./CreateListing.module.scss";
 const config = {
   requiredState: ["title", "categoryId", "deliveryId", "quantity"],
   initialState: {
-    brand: "",
+    brandId: 0,
+    brandInput: "",
+    brandSelect: "",
     categoryId: 0,
     subcategoryId: 0,
-    brandSelect: 0,
     title: "",
     quantity: 1,
     price: 0.0,
@@ -44,22 +45,26 @@ const reducer = (state, payload) => {
 
   switch (payload.dataPoint) {
     case "brandSelect": {
-      const brandName = payload.dataValue.split("@")[1];
+      const brandSplit = payload.dataValue.split("@");
+      const brandId = Number(brandSplit[0]);
+      const brandName = brandSplit[1];
 
       return {
         ...state,
-        brand: brandName,
+        brandId: brandId,
         brandSelect: payload.dataValue,
+        brandInput: brandName,
         title: `${brandName} `,
       };
     }
 
-    case "brand": {
+    case "brandInput": {
       return {
         ...state,
-        brand: payload.dataValue,
-        title: `${payload.dataValue} `,
+        brandId: 0,
         brandSelect: 0,
+        brandInput: payload.dataValue,
+        title: `${payload.dataValue} `,
       };
     }
 
@@ -157,19 +162,36 @@ function CreateListing() {
 
   const clickSubmitProduct = (e) => {
     e.preventDefault();
-
+    checkBrand();
     if (validateInputs()) {
       if (!state.price) {
         setMessage(`Are you sure you want to list your ${state.title} for free?`);
         modalRef.current.showModal();
       }
-      sendGoodToDB();
+      // checkBrand();
     } else {
       console.error("Keep Trying");
     }
   };
 
-  const sendGoodToDB = async () => {
+  const checkBrand = async () => {
+    if (state.brandSelect) {
+      sendGoodToDB({ brandId: state.brandSelect });
+      return;
+    }
+
+    if (state.brandInput) {
+      const { id, exists } = await gql(`{ brandCheck( brandString: "${state.brandInput}") {id, exists} }`);
+
+      if (exists) {
+        // Send to DB with the returned id
+      } else {
+        // Send new brand to DB, then send the rest of the good to DB
+      }
+    }
+  };
+
+  const sendGoodToDB = async (payload) => {
     const outsideTables = {
       description: 0,
     };
@@ -190,7 +212,7 @@ function CreateListing() {
         price: ${Number(state.price) * toPennies}, 
         itemCondition: ${Number(state.itemCondition)},  
         title: "${productTitle}",  
-        brand: 1, 
+        brand: ${payload.brandSelect ? payload.brandSelect : 1}, 
         descriptionId: ${outsideTables.description ?? null}, 
         categoryId: ${Number(state.categoryId)}, 
         subcategoryId: ${Number(state.subcategoryId)} 
@@ -198,11 +220,7 @@ function CreateListing() {
         deliveryId: ${Number(state.deliveryId)} )
       { insertId } }`;
 
-      console.info(mutation);
-
-      const r = await gql(mutation);
-
-      const { newGood } = r;
+      const { newGood } = await gql(mutation);
 
       if (newGood.insertId) {
         console.info("Success");
@@ -283,10 +301,10 @@ function CreateListing() {
                 </option>
               ))}
             </select>
-            <input placeholder="Brand Name" data-point="brand" list="brand-list" value={state.brand} onChange={handleReducer} />
+            <input placeholder="Brand Name" data-point="brandInput" list="brand-list" value={state.brandInput} onChange={handleReducer} />
             <datalist id="brand-list">
-              {serverOptions?.brands?.map((brand) => (
-                <option key={brand.brandName} data-brand-id={brand.id} value={brand.brandName}></option>
+              {serverOptions?.brands?.map((brandOption) => (
+                <option key={brandOption.brandName} data-brand-id={brandOption.id} value={brandOption.brandName}></option>
               ))}
             </datalist>
           </div>

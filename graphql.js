@@ -23,6 +23,7 @@ export const schema = buildSchema(`
     itemConditions: [ItemCondition]
     categories: [Category]
     subcategories (categoryId: Int!): [Subcategory]
+    brandCheck(brandString: String): BrandPacket
   }
 
   type Mutation {
@@ -60,6 +61,11 @@ export const schema = buildSchema(`
     message: String
     protocol41: Boolean
     changedRows: Int
+}
+
+type BrandPacket {
+  id: Int
+  exists: Boolean
 }
 
 type Product {
@@ -136,6 +142,16 @@ type Brand {
 export const root = {
   greet: () => {
     return "Satan";
+  },
+  brandCheck: async (args, req) => {
+    const r = await query("select * from brands where brandName like ?", [args.brandString]);
+
+    const brandPacket = {
+      id: r[0] ? r[0].id : null,
+      exists: !!r.length,
+    };
+
+    return brandPacket;
   },
   categories: async () => {
     const r = await query("select * from categories order by id");

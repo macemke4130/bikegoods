@@ -19,6 +19,8 @@ drop table goods;
 
 select * from goods inner join brands on goods.brand = brands.id join goodTypes on goods.goodType = goodTypes.id join itemConditions on goods.itemCondition = itemConditions.id join goodDescriptions on goods.descriptionId = goodDescriptions.id join deliveryTypes on goods.deliveryId = deliveryTypes.id where goods.id = 1;
 
+select * from goods join users on goods.userId = users.id join brands on goods.brand = brands.id join categories on goods.categoryId = categories.id join itemConditions on goods.itemCondition = itemConditions.id join goodDescriptions on goods.descriptionId = goodDescriptions.id join deliveryTypes on goods.deliveryId = deliveryTypes.id where goods.id = 2;
+
 create table categories (
 	id int primary key auto_increment not null,
     category varchar(32)

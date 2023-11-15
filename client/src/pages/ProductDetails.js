@@ -83,7 +83,7 @@ function ProductDetails() {
   return (
     <div className={styles.container}>
       <SuccessfullyListed listSuccess={listSuccess} />
-      <nav aria-label="Breadcrumb Navigation">
+      <nav aria-label="Breadcrumb">
         {state.category && <Link to="#">{state.category}</Link>}
         {state.subcategory && (
           <>
