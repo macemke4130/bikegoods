@@ -1,6 +1,6 @@
 create table goods (
     id int primary key auto_increment not null,
-    dateListed timestamp default now(),
+    dateListed datetime default now(),
     userId int not null,
     sold boolean default false,
     quantity int not null,
@@ -14,6 +14,12 @@ create table goods (
     subcategoryId int,
     deliveryId int not null
 );
+
+drop table goods;
+
+select * from goods join users on goods.userId = users.id join brands on goods.brand = brands.id join categories on goods.categoryId = categories.id join subcategories on goods.subcategoryId = subcategories.id join itemConditions on goods.itemCondition = itemConditions.id left join goodDescriptions on goods.descriptionId = goodDescriptions.id join deliveryTypes on goods.deliveryId = deliveryTypes.id where goods.id = 24;
+
+select * from goods join users on goods.userId = users.id join brands on goods.brand = brands.id join categories on goods.categoryId = categories.id join subcategories on goods.subcategoryId = subcategories.id join itemConditions on goods.itemCondition = itemConditions.id left join goodDescriptions on goods.descriptionId = goodDescriptions.id join deliveryTypes on goods.deliveryId = deliveryTypes.id where goods.id = 14;
 
 drop table goods;
 
@@ -91,6 +97,7 @@ values (1, "Road Bike"),
 (3, "Jacket"),
 (4, "Wall Art"),
 (4, "Koozie"),
+(4, "Books / Magazines"),
 (4, "Stickers / Patches"),
 (4, "Novelties"),
 (5, "Trunk Rack"),

@@ -68,21 +68,6 @@ const reducer = (state, payload) => {
       };
     }
 
-    case "categoryId": {
-      return {
-        ...state,
-        categoryId: dataValue,
-      };
-    }
-
-    case "subcategoryId": {
-      console.info(payload);
-      return {
-        ...state,
-        subcategoryId: dataValue,
-      };
-    }
-
     case "descriptionText": {
       const remainingCharacters = config.initialState.descriptionCharacterCount - dataValue.length;
 
@@ -125,7 +110,6 @@ function CreateListing() {
   useEffect(() => {
     if (!openGate.current) return;
     openGate.current = false;
-
     getServerOptions();
   });
 
@@ -138,19 +122,10 @@ function CreateListing() {
         itemConditions { id, itemConditionName }
         }`);
 
-      const compareCategory = (a, b) => a.category > b.category;
-      const compareBrand = (a, b) => a.brandName > b.brandName;
-
-      // Make a copy of these databases before sorting.
-      // This is important because I am referencing the original
-      // order so populate the state.title for the user - LM
-      config.databaseLists.categories = [...r.categories];
-      config.databaseLists.brands = [r.brands];
-
       setServerOptions({
         deliveryTypes: r.deliveryTypes,
-        brands: r.brands.sort(compareBrand),
-        categories: r.categories.sort(compareCategory),
+        brands: r.brands,
+        categories: r.categories,
         itemConditions: r.itemConditions,
       });
 
@@ -160,18 +135,18 @@ function CreateListing() {
     }
   };
 
-  const clickSubmitProduct = (e) => {
-    e.preventDefault();
-    checkBrand();
-    if (validateInputs()) {
-      if (!state.price) {
-        setMessage(`Are you sure you want to list your ${state.title} for free?`);
-        modalRef.current.showModal();
-      }
-      // checkBrand();
-    } else {
-      console.error("Keep Trying");
-    }
+  const handleReducer = (e) => {
+    const dataPoint = e.target.dataset.point;
+    const dataValue = e.target.value;
+
+    dispatch({ dataPoint, dataValue });
+    if (dataPoint === "categoryId") fetchSubcategory(dataValue);
+  };
+
+  const fetchSubcategory = async (categoryId) => {
+    const { subcategories } = await gql(`{ subcategories (categoryId: ${Number(categoryId)}) { id, subcategory } }`);
+    subcategories.sort((a, b) => a.subcategory > b.subcategory);
+    setSubcategories(subcategories);
   };
 
   const checkBrand = async () => {
@@ -180,29 +155,33 @@ function CreateListing() {
       return;
     }
 
-    if (state.brandInput) {
-      const { id, exists } = await gql(`{ brandCheck( brandString: "${state.brandInput}") {id, exists} }`);
+    const brandIdExists = config.databaseLists.brands.findIndex((element) => element.brandName === state.brandInput);
+    console.info(config.databaseLists.brands);
 
-      if (exists) {
-        // Send to DB with the returned id
-      } else {
-        // Send new brand to DB, then send the rest of the good to DB
-      }
+    if (brandIdExists !== -1) {
+      sendGoodToDB({ brandId: brandIdExists });
+    } else {
+      // Send new brand to DB, then send the rest of the good to DB
+      sendNewBrand(state.brandInput);
     }
   };
 
-  const sendGoodToDB = async (payload) => {
-    const outsideTables = {
-      description: 0,
-    };
+  // Insert new brand, send returned id to sendGoodToDB().
+  const sendNewBrand = async (newBrandFromInput) => {
+    try {
+      const { newBrand } = await gql(`mutation { newBrand (brandName: "${newBrandFromInput}") { insertId } }`);
 
-    // If descriptionText, insert into goodDescriptions database
-    // and return insertId into {outsideTables}.
-    if (state.descriptionText) {
-      const descriptionStatus = await sendDescriptionToDB();
-      outsideTables.description = descriptionStatus.insertId;
+      if (newBrand) {
+        sendGoodToDB({ brandId: newBrand.insertId });
+      } else {
+        console.info("Duplicate");
+      }
+    } catch (e) {
+      console.error(e);
     }
+  };
 
+  const sendGoodToDB = async (brandPayload) => {
     const productTitle = state.title.replaceAll("  ", " ");
 
     // Add product to goods table.
@@ -212,13 +191,14 @@ function CreateListing() {
         price: ${Number(state.price) * toPennies}, 
         itemCondition: ${Number(state.itemCondition)},  
         title: "${productTitle}",  
-        brand: ${payload.brandSelect ? payload.brandSelect : 1}, 
-        descriptionId: ${outsideTables.description ?? null}, 
+        brand: ${state.brandId || brandPayload.brandSelect || brandPayload.brandId}, 
+        descriptionText: "${state.descriptionText ?? null}",
         categoryId: ${Number(state.categoryId)}, 
         subcategoryId: ${Number(state.subcategoryId)} 
         quantity: ${Number(state.quantity)}, 
         deliveryId: ${Number(state.deliveryId)} )
       { insertId } }`;
+      console.info(mutation);
 
       const { newGood } = await gql(mutation);
 
@@ -226,20 +206,6 @@ function CreateListing() {
         console.info("Success");
         history.push(`/product-${newGood.insertId}?success=true`);
       }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const sendDescriptionToDB = async () => {
-    try {
-      const removeCarriageReturns = state.descriptionText.replace(RegExp(String.fromCharCode(10), "g"), "/n");
-      const mutation = `mutation { newDescription(descriptionText: "${removeCarriageReturns}") { insertId} }`;
-      const r = await gql(mutation);
-
-      const { newDescription } = r;
-
-      return { insertId: newDescription.insertId ?? 0 };
     } catch (e) {
       console.error(e);
     }
@@ -263,20 +229,6 @@ function CreateListing() {
     return validGood;
   };
 
-  const handleReducer = (e) => {
-    const dataPoint = e.target.dataset.point;
-    const dataValue = e.target.value;
-
-    dispatch({ dataPoint, dataValue });
-    if (dataPoint === "categoryId") fetchSubcategory(dataValue);
-  };
-
-  const fetchSubcategory = async (categoryId) => {
-    const { subcategories } = await gql(`{ subcategories (categoryId: ${Number(categoryId)}) { id, subcategory } }`);
-    subcategories.sort((a, b) => a.subcategory > b.subcategory);
-    setSubcategories(subcategories);
-  };
-
   const handleClearTitle = (e) => {
     e.preventDefault();
     const dataPoint = "title";
@@ -284,115 +236,125 @@ function CreateListing() {
     dispatch({ dataPoint, dataValue });
   };
 
+  const clickSubmitProduct = (e) => {
+    e.preventDefault();
+
+    validateInputs() ? checkBrand() : console.error("More Inputs");
+  };
+
   if (loading === true) return <>Loading</>;
 
   return (
-    <form className={styles.container}>
-      <fieldset data-brand-box>
-        <legend>Brand</legend>
+    <>
+      <form className={styles.container}>
+        <fieldset data-brand-box>
+          <legend>Brand</legend>
+          <label>
+            <span data-brand-instructions>Select a Brand from list or type in the field</span>
+            <span data-brand-inputs>
+              <select data-point="brandSelect" value={state.brandSelect} onChange={handleReducer}>
+                <option value="0">Brands...</option>
+                {serverOptions?.brands?.map((brand) => (
+                  <option key={brand.brandName} data-brand-select={brand.brandName} value={`${brand.id}@${brand.brandName}`}>
+                    {brand.brandName}
+                  </option>
+                ))}
+              </select>
+              <input placeholder="Brand Name" data-point="brandInput" list="brand-list" value={state.brandInput} onChange={handleReducer} />
+              <datalist id="brand-list">
+                {serverOptions?.brands?.map((brandOption) => (
+                  <option key={brandOption.brandName} data-brand-id={brandOption.id} value={brandOption.brandName}></option>
+                ))}
+              </datalist>
+            </span>
+          </label>
+        </fieldset>
+
         <label>
-          <div data-brand-instructions>Select a Brand from list or type in the field</div>
-          <div data-brand-inputs>
-            <select data-point="brandSelect" value={state.brandSelect} onChange={handleReducer}>
-              <option value="0">Brands...</option>
-              {serverOptions?.brands?.map((brand) => (
-                <option key={brand.brandName} data-brand-select={brand.brandName} value={`${brand.id}@${brand.brandName}`}>
-                  {brand.brandName}
-                </option>
-              ))}
-            </select>
-            <input placeholder="Brand Name" data-point="brandInput" list="brand-list" value={state.brandInput} onChange={handleReducer} />
-            <datalist id="brand-list">
-              {serverOptions?.brands?.map((brandOption) => (
-                <option key={brandOption.brandName} data-brand-id={brandOption.id} value={brandOption.brandName}></option>
-              ))}
-            </datalist>
-          </div>
+          Product Category:
+          <select data-point="categoryId" value={state.categoryId} onChange={handleReducer}>
+            <option value="0">Please Select...</option>
+            {serverOptions?.categories?.map((category) => (
+              <option key={category.category} value={category.id}>
+                {category.category}
+              </option>
+            ))}
+          </select>
         </label>
-      </fieldset>
 
-      <label>
-        Product Category:
-        <select data-point="categoryId" value={state.categoryId} onChange={handleReducer}>
-          <option value="0">Please Select...</option>
-          {serverOptions?.categories?.map((category) => (
-            <option key={category.category} value={category.id}>
-              {category.category}
-            </option>
-          ))}
-        </select>
-      </label>
+        <label data-visually-hidden={subcategories.length ? false : true}>
+          Sub-Category:
+          <select data-point="subcategoryId" value={state.subcategoryId} onChange={handleReducer}>
+            <option value="0">Please Select...</option>
+            {subcategories?.map((subcategory) => (
+              <option key={subcategory.subcategory} value={subcategory.id}>
+                {subcategory.subcategory}
+              </option>
+            ))}
+          </select>
+        </label>
 
-      <label data-visually-hidden={subcategories.length ? false : true}>
-        Sub-Category:
-        <select data-point="subcategoryId" value={state.subcategoryId} onChange={handleReducer}>
-          <option value="0">Please Select...</option>
-          {subcategories?.map((subcategory) => (
-            <option key={subcategory.subcategory} value={subcategory.id}>
-              {subcategory.subcategory}
-            </option>
-          ))}
-        </select>
-      </label>
+        <label>
+          Product Title:
+          <input type="text" data-point="title" value={state.title} onChange={handleReducer}></input>
+          <button onClick={handleClearTitle} aria-label="Erase Title Text">
+            X
+          </button>
+        </label>
 
-      <label>
-        Product Title:
-        <input type="text" data-point="title" value={state.title} onChange={handleReducer}></input>
-        <button onClick={handleClearTitle} aria-label="Erase Title Text">
-          X
+        <label>
+          Quantity:
+          <input type="number" step="1" inputMode="numeric" data-point="quantity" value={state.quantity} onChange={handleReducer}></input>
+        </label>
+
+        <label>
+          Item Condition:
+          <select data-point="itemCondition" value={state.itemCondition} onChange={handleReducer}>
+            <option value="0">Please Select...</option>
+            {serverOptions?.itemConditions?.map((condition) => (
+              <option key={condition.itemConditionName} value={condition.id}>
+                {condition.itemConditionName}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          Price in USD:
+          <input type="number" step="1" inputMode="numeric" data-point="price" value={state.price} onChange={handleReducer} />
+        </label>
+
+        <label>
+          Delivery Method:
+          <select data-point="deliveryId" value={state.deliveryId} onChange={handleReducer}>
+            <option value="0">Please Select...</option>
+            {serverOptions?.deliveryTypes?.map((type) => (
+              <option key={type.deliveryType} value={type.id}>
+                {type.deliveryType}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div>
+          <label>
+            Product Description
+            <textarea data-point="descriptionText" value={state.descriptionText} onChange={handleReducer} />
+          </label>
+          <span>Characters Remaining: {state.descriptionCharacterCount} / 2000</span>
+        </div>
+
+        <button onClick={clickSubmitProduct} disabled={message ? true : false}>
+          List Product
         </button>
-      </label>
+      </form>
 
-      <label>
-        Quantity:
-        <input type="number" step="1" inputMode="numeric" data-point="quantity" value={state.quantity} onChange={handleReducer}></input>
-      </label>
-
-      <label>
-        Item Condition:
-        <select data-point="itemCondition" value={state.itemCondition} onChange={handleReducer}>
-          <option value="0">Please Select...</option>
-          {serverOptions?.itemConditions?.map((condition) => (
-            <option key={condition.itemConditionName} value={condition.id}>
-              {condition.itemConditionName}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label>
-        Price in USD:
-        <input type="number" step="1" inputMode="numeric" data-point="price" value={state.price} onChange={handleReducer} />
-      </label>
-
-      <label>
-        Delivery Method:
-        <select data-point="deliveryId" value={state.deliveryId} onChange={handleReducer}>
-          <option value="0">Please Select...</option>
-          {serverOptions?.deliveryTypes?.map((type) => (
-            <option key={type.deliveryType} value={type.id}>
-              {type.deliveryType}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <div>
-        <label>
-          Product Description
-          <textarea data-point="descriptionText" value={state.descriptionText} onChange={handleReducer} />
-        </label>
-        <div>Characters Remaining: {state.descriptionCharacterCount} / 2000</div>
-      </div>
-      <button onClick={clickSubmitProduct} disabled={message ? true : false}>
-        List Product
-      </button>
       <dialog ref={modalRef}>
         <div>{message}</div>
         <button>List For Free</button>
         <button>No</button>
       </dialog>
-    </form>
+    </>
   );
 }
 

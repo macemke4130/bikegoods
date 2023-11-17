@@ -28,8 +28,9 @@ export const schema = buildSchema(`
 
   type Mutation {
     newUser (displayName: String!, emailAddress: String!, userPassword: String!): mysqlResponse
-    newGood (jwt: String!, brand: Int, title: String!, quantity: Int, descriptionId: Int, price: Int, itemCondition: Int, deliveryId: Int, categoryId: Int, subcategoryId: Int): mysqlResponse
+    newGood (jwt: String!, brand: Int, title: String!, quantity: Int, descriptionText: String, descriptionId: Int, price: Int, itemCondition: Int, deliveryId: Int, categoryId: Int, subcategoryId: Int): mysqlResponse
     newDescription (descriptionText: String): mysqlResponse
+    newBrand (brandName: String!): mysqlResponse
   }
 
   type Category {
@@ -154,7 +155,7 @@ export const root = {
     return brandPacket;
   },
   categories: async () => {
-    const r = await query("select * from categories order by id");
+    const r = await query("select * from categories order by category");
     return r;
   },
   subcategories: async (args, req) => {
@@ -220,9 +221,19 @@ export const root = {
 
     delete args.jwt;
     args.userId = authUserId;
-    console.log(args);
+
+    let descriptionTextInsertId = 0;
+    if (args.descriptionText) {
+      const r = await query(`insert into goodDescriptions (descriptionText) values (?)`, [args.descriptionText]);
+      descriptionTextInsertId = r.insertId;
+    }
+
+    if (descriptionTextInsertId) args.descriptionId = descriptionTextInsertId;
+
+    delete args.descriptionText;
 
     const r = await query("insert into goods set ?", [args]);
+    console.log(r);
     return r;
   },
   newDescription: async (args, req) => {
@@ -231,7 +242,7 @@ export const root = {
   },
   productDetails: async (args, req) => {
     const r = await query(
-      `select * from goods join users on goods.userId = users.id join brands on goods.brand = brands.id join categories on goods.categoryId = categories.id join subcategories on goods.subcategoryId = subcategories.id join itemConditions on goods.itemCondition = itemConditions.id join goodDescriptions on goods.descriptionId = goodDescriptions.id join deliveryTypes on goods.deliveryId = deliveryTypes.id where goods.id = ?`,
+      `select * from goods join users on goods.userId = users.id join brands on goods.brand = brands.id join categories on goods.categoryId = categories.id join subcategories on goods.subcategoryId = subcategories.id join itemConditions on goods.itemCondition = itemConditions.id left join goodDescriptions on goods.descriptionId = goodDescriptions.id join deliveryTypes on goods.deliveryId = deliveryTypes.id where goods.id = ?`,
       [args.id]
     );
     return r[0];
@@ -253,12 +264,16 @@ export const root = {
     return r;
   },
   brands: async () => {
-    const r = await query("select * from brands order by id");
+    const r = await query("select * from brands order by brandName");
     return r;
   },
   getBrand: async (args, req) => {
     const r = await query("select * from brands where id = ?", [args.id]);
     return r[0];
+  },
+  newBrand: async (args, req) => {
+    const r = await query(`insert into brands (brandName) values (?)`, [args.brandName]);
+    return r;
   },
   itemConditions: async () => {
     const r = await query("select * from itemConditions order by id");

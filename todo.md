@@ -45,6 +45,8 @@
 
 ## Database
 
+- Learn how to insert data into two tables at once in SQL
+  https://www.geeksforgeeks.org/insert-multiple-values-into-multiple-tables-using-a-single-statement-in-sql-server/
 - Add product weight to goods
 - Preferred method of contact
 - Phone Number

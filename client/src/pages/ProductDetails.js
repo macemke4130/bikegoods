@@ -27,7 +27,7 @@ const config = {
 const reducer = (state, payload) => {
   const penniesToDollars = payload.price / 100;
   const soldStatus = payload.sold ? "No Longer Available" : "Still Available";
-  const descriptionParagraphs = payload.descriptionText.split("/n");
+  const descriptionParagraphs = payload.descriptionText?.split("/n");
   const listedTime = new Date(Number(payload.dateListed)).toLocaleDateString();
 
   return {
@@ -65,8 +65,10 @@ function ProductDetails() {
   const getProductDetails = async () => {
     try {
       const { productDetails } = await gql(
-        `{ productDetails(id: ${productId}){ category, subcategory, dateListed, displayName, sold, quantity, price, itemConditionName, title, brandName, goodType, type, deliveryType, descriptionText } }`
+        `{ productDetails(id: ${productId}){ category, subcategory, dateListed, displayName, sold, quantity, price, itemConditionName, title, brandName, deliveryType, descriptionText } }`
       );
+
+      console.info(productDetails);
 
       if (productDetails) {
         console.info(productDetails);
@@ -109,12 +111,14 @@ function ProductDetails() {
           </div>
         </section>
       </div>
-      <section data-description aria-labelledby="description-title">
-        <h2 id="description-title">Product Description</h2>
-        {state.descriptionParagraphs.map((p, index) => (
-          <p key={`p-${index}`}>{p}</p>
-        ))}
-      </section>
+      {state.descriptionText && (
+        <section data-description aria-labelledby="description-title">
+          <h2 id="description-title">Product Description</h2>
+          {state.descriptionParagraphs.map((p, index) => (
+            <p key={`p-${index}`}>{p}</p>
+          ))}
+        </section>
+      )}
     </div>
   );
 }
